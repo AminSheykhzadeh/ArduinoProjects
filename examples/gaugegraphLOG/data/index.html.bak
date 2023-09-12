@@ -47,7 +47,7 @@
   <div id="container-cangle" class="chart-container" style="width: 50%; height: 50%; float: left"></div>
   <div id="chart-tempecel" class="container" style="width: 50%; height: 50%; float: left"></div>
   </div>
-	<div><a href="EMBD/index.html">Page 2</a></div>
+	<div><a href="EMBD/">Page 2</a></div>
 </body>
 
 <script>
