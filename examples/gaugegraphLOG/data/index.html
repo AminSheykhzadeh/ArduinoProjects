@@ -1,0 +1,265 @@
+<!DOCTYPE HTML><html>
+
+<head>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="https://code.highcharts.com/modules/solid-gauge.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+  <style>
+
+    body {
+
+      min-width: 310px;
+
+    	max-width: 100%;
+
+    	height: 100%;
+
+      margin: 0 auto;
+
+    }
+
+    h2 {
+
+      font-family: Arial;
+
+      font-size: 2.5rem;
+
+      text-align: center;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h2>ESP8266 Webserver Temperature Data Logger</h2>
+
+  <div style="width: 100%; height: 80%; margin: 0 auto">
+  <div id="container-cangle" class="chart-container" style="width: 50%; height: 50%; float: left"></div>
+  <div id="chart-tempecel" class="container" style="width: 50%; height: 50%; float: left"></div>
+    </div>
+	
+</body>
+
+<script>
+
+var chartT = new Highcharts.Chart({
+
+  chart:{ renderTo : 'chart-tempecel' },
+
+  title: { text: 'ESP8266 LM35 Temperature data Plotter' },
+
+  series: [{
+
+    showInLegend: false,
+
+    data: []
+
+  }],
+
+  plotOptions: {
+
+    line: { animation: false,
+
+      dataLabels: { enabled: true }
+
+    },
+
+    series: { color: '#FF0000' }
+
+  },
+
+  xAxis: { type: 'datetime',
+
+    dateTimeLabelFormats: { second: '%H:%M:%S' }
+
+  },
+
+  yAxis: {
+
+    title: { text: 'Celsius (&degC)' }
+
+  },
+
+  credits: { enabled: false }
+
+});
+
+var gaugeOptions = {
+    chart: {
+        type: 'solidgauge'
+    },
+
+    title: null,
+
+    pane: {
+        center: ['50%', '70%'],
+        size: '70%',
+        startAngle: -115,
+        endAngle: 115,
+        background: {
+            backgroundColor:
+                Highcharts.defaultOptions.legend.backgroundColor || '#F3F6F4',
+            innerRadius: '60%',
+            outerRadius: '100%',
+            shape: 'arc'
+        }
+    },
+
+    exporting: {
+        enabled: false
+    },
+
+    tooltip: {
+        enabled: false
+    },
+
+    // the value axis
+    yAxis: {
+        stops: [
+            [0.9, '#3299FF'], // blue
+            [0.5, '#ffa500'], // orange
+            [0.9, '#FF0000'] // red
+        ],
+        lineWidth: 0,
+        tickWidth: 0,
+        minorTickInterval: null,
+        tickAmount: 2,
+        title: {
+            y: -70
+        },
+        labels: {
+            y: 16
+        }
+    },
+
+    plotOptions: {
+        solidgauge: {
+            dataLabels: {
+                y: 5,
+                borderWidth: 0,
+                useHTML: true
+            }
+        }
+    }
+};
+
+// The speed gauge
+var chartSpeed = Highcharts.chart('container-cangle', Highcharts.merge(gaugeOptions, {
+    yAxis: {
+        min: 0,
+        max: 100,
+        title: {
+            text: 'Temperature'
+        }
+    },
+
+    credits: {
+        enabled: false
+    },
+
+    series: [{
+        name: 'Speed',
+        data: [80],
+        dataLabels: {
+            format:
+                '<div style="text-align:center">' +
+                '<span style="font-size:25px">{y}</span><br/>' +
+                '<span style="font-size:12px;opacity:0.4">&degC</span>' +
+                '</div>'
+        },
+        tooltip: {
+            valueSuffix: ' °C'
+        }
+    }]
+
+}));
+
+
+
+// Bring life to the dials
+setInterval(function () {
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+
+    if (this.readyState == 4 && this.status == 200) {
+    // Speed
+    var point,
+        newVal;
+     //   inc;
+		 y = parseFloat(this.responseText);
+	//	var point = parseFloat(this.responseText);
+		//var newVal = parseFloat(this.responseText);
+		
+    if (chartSpeed) {
+        point = chartSpeed.series[0].points[0];
+      //  inc = Math.round((Math.random() - 0.5) * 100);
+       // newVal = point.y + parseFloat(this.responseText);
+		newVal = parseFloat(this.responseText);
+
+        if (newVal < 0 || newVal > 100) {
+            //newVal = point.y - parseFloat(this.responseText);
+			newVal = parseFloat(this.responseText);
+        }
+
+        point.update(newVal);
+    }
+	}
+	  };
+
+  xhttp.open("GET", "/DStempC", true);
+
+  xhttp.send();
+
+ }, 500);
+ 
+
+setInterval(function ( ) {
+
+  var xhttp = new XMLHttpRequest();
+
+  xhttp.onreadystatechange = function() {
+
+    if (this.readyState == 4 && this.status == 200) {
+
+      var x = (new Date()).getTime(),
+
+          y = parseFloat(this.responseText);
+
+      //console.log(this.responseText);
+
+      if(chartT.series[0].data.length > 40) {
+
+        chartT.series[0].addPoint([x, y], true, true, true);
+
+      } else {
+
+        chartT.series[0].addPoint([x, y], true, false, true);
+
+      }
+	  
+	  
+	  
+
+    }
+
+  };
+
+  xhttp.open("GET", "/DStempC", true);
+
+  xhttp.send();
+
+}, 500 ) ;
+
+</script>
+
+</html>
