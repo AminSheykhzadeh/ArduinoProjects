@@ -59,6 +59,9 @@ void setup () {
   server.on ("/", HTTP_GET, [] (AsyncWebServerRequest * request) {
     request-> send (SPIFFS, "/index.html");
   });
+  server.on ("/EMBD/", HTTP_GET, [] (AsyncWebServerRequest * request) {
+    request-> send (SPIFFS, "/index.html");
+  });
 
   server.on ("/DStempC", HTTP_GET, [] (AsyncWebServerRequest * request) {
     request-> send_P (200, "text / plain", getDStempC(). c_str ());
