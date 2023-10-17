@@ -19,7 +19,7 @@
             "includePath": [
                 "C:\\Users\\amin-\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\tools\\sdk\\include",
                 "C:\\Users\\amin-\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\tools\\sdk\\lwip2\\include",
-                "C:\\Users\\amin-\\AppData\\Local\\Temp\\arduino\\sketches\\8D8BF8E2246C9C3111F59A6C7C1F7887\\core",
+                "C:\\Users\\amin-\\AppData\\Local\\Temp\\arduino\\sketches\\1FC37AEF06CE9FBEC568C36C74D31157\\core",
                 "C:\\Users\\amin-\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\cores\\esp8266",
                 "C:\\Users\\amin-\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\variants\\nodemcu",
                 "c:\\users\\amin-\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\xtensa-lx106-elf\\include\\c++\\10.3.0",
