@@ -30,55 +30,41 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 char webpage[] PROGMEM = R"=====(
   <html>
     <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js" integrity="sha512-7U4rRB8aGAHGVad3u2jiC7GA5/1YhQcQjxKeaVms/bT66i3LVBMRcBI9KwABNWnxOSwulkuSXxZLGuyfvo7V1A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js'></script>
     </head>
 
     <body onload= "javascript:init()">
      <div>
-     <h1>hi</h1>
+      <h1>hi</h1>
       <canvas id="line-chart" width="800" height="450">
       </canvas>
      </div>
      
-     <!-- Adding a webSocket to the client (webpage)(js. code to get the data and display it on the page) -->
     <script>
       var webSocket, dataPlot;
-      //<!--addData function-->
-      function addData(lable, data){
-          //push x val using dot notation
-        dataPlot.data.lables.push(lable);
-          //push x val using dot notation
+      function addData(label, data){
+        dataPlot.data.labels.push(label);
         dataPlot.data.datasets[0].data.push(data);
-          //call update methode so data ploted
         dataPlot.update();
       }
-      //<!-- function init to run when page is loaded-->
       function init(){
-        //<!--instance of WebSocket class running on port 81 -->
         webSocket = new WebSocket('ws://' + window.location.hostname + ':81/');
-        //<!--define dataPlot variable to be an instance of chart class included-->
         dataPlot = new Chart(document.getElementById("line-chart"), {
           type: 'line',
           data: {
-            lables: [],
+            labels: [],
             datasets: [{
               data:[],
-              lable: "Counter"
+              label: "Counter",
               borderColor: "#3e95cd",
               fill: false
             }]
           }
         });
-        //<!--onmessage methode to get event data from those measurements posted by server-->
         webSocket.onmessage = function(event){
-          //<!--and parse the json formatted data to be displayed on page-->
           var data = JSON.parse(event.data);
-          //<!--add data to the chart-->
-            // X Axis: time stamp for when data sent to socket using Builtin Date class with today instance
           var today  = new Date();
-            //use methodes to get hour min and sec in to string t
-          var t = today.getHours() + ":" today.getMinutes() + ":" +  today.getSeconds();
-            //func defined to get x and y value
+          var t = today.getHours() + ":" + today.getMinutes() + ":" +  today.getSeconds();
           addData(t , data.value);
         }
       }
@@ -127,7 +113,8 @@ void loop() {
 void getData() {
   //Serial.println(random());
   String json = "{\"value\":";
-  json += i++;
+  //json += i+ random(10,20);;
+  json += random(10,100);
   json += "}";
 
   //broadcastTXT methode of web socket obj to sent that json string to the socket

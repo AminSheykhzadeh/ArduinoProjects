@@ -113,8 +113,8 @@ void loop() {
 void getData() {
   //Serial.println(random());
   String json = "{\"value\":";
-  json += i+ random(10,20);;
-  //json += random(10,100);
+  //json += i+ random(10,20);;
+  json += random(10,100);
   json += "}";
 
   //broadcastTXT methode of web socket obj to sent that json string to the socket
