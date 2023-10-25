@@ -1,17 +1,14 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
+#include <FS.h>
 
-const char* ssid = "A";
+
+const char* ssid = "a";
 const char* password = "aaaaaaaa";
 
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
-float readSensor1();
-float readSensor2();
-void handleRoot();
 
 void setup() {
   Serial.begin(115200);
@@ -22,9 +19,14 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
-  Serial.println(WiFi.localIP());
+
+  if (!SPIFFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return;
+  }
 
   server.on("/", HTTP_GET, handleRoot);
+  server.on("/export", HTTP_GET, handleExport);
   server.begin();
 
   webSocket.begin();
@@ -38,16 +40,53 @@ void loop() {
   float sensor1Value = readSensor1();
   float sensor2Value = readSensor2();
 
+  logData(sensor1Value, sensor2Value); // Log data to SPIFFS
+
   String jsonData = "{\"sensor1\":" + String(sensor1Value) + ", \"sensor2\":" + String(sensor2Value) + "}";
   webSocket.broadcastTXT(jsonData);
 
-  delay(100); // Send data every 0.5 seconds
+  delay(5000); // Send data every 5 seconds
+}
 
-    Serial.println(jsonData);
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  // Handle WebSocket events here if needed
+}
 
+void handleExport() {
+  File dataFile = SPIFFS.open("/data.csv", "r");
+  if (!dataFile) {
+    server.send(404, "text/plain", "Data file not found");
+    return;
+  }
+  
+  server.streamFile(dataFile, "text/csv");
+  dataFile.close();
+}
+
+void logData(float sensor1Value, float sensor2Value) {
+  File dataFile = SPIFFS.open("/data.csv", "a");
+  if (!dataFile) {
+    Serial.println("Failed to open data file for writing");
+    return;
+  }
+  
+  String dataString = String(sensor1Value) + "," + String(sensor2Value) + "\n";
+  dataFile.print(dataString);
+  dataFile.close();
+}
+
+float readSensor1() {
+  // Your sensor1's reading logic here
+  return random(20, 30); // Dummy value for demonstration
+}
+
+float readSensor2() {
+  // Your sensor2's reading logic here
+  return random(50, 70); // Dummy value for demonstration
 }
 
 void handleRoot() {
+
   String html = R"=====(
     <!DOCTYPE html>
     <html lang="en">
@@ -106,18 +145,5 @@ void handleRoot() {
   )=====";
 
   server.send(200, "text/html", html);
-}
 
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
-  // Handle WebSocket events here if needed
-}
-
-float readSensor1() {
-  // Your sensor1's reading logic here
-  return random(20, 30); // Dummy value for demonstration
-}
-
-float readSensor2() {
-  // Your sensor2's reading logic here
-  return random(50, 70); // Dummy value for demonstration
 }
