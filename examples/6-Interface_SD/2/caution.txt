@@ -1,0 +1,3 @@
+In this code, handleNotFound is a catch-all handler that tries to serve any file that matches the URI requested by the client. It uses the URI to determine the content type and streams the file back to the client if it exists on the SD card. If the file doesn't exist, it sends a 404 error.
+
+Please note that for security reasons, you might want to check the requested path to ensure that it doesn't contain ".." or similar sequences that could be used for directory traversal attacks.
