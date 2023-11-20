@@ -1,0 +1,1 @@
+Sd card and export is now working but chart has some problems

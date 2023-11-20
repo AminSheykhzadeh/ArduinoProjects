@@ -26,8 +26,19 @@ void setup() {
   
   // Starting the server
   server.onNotFound(handleNotFound);
+  server.on("/", HTTP_GET, handleRoot);
   server.begin();
   Serial.println("HTTP server started");
+}
+
+void handleRoot() {
+  File file = SD.open("/index.html"); // Make sure the path matches the location on the SD card
+  if (file) {
+    server.streamFile(file, "text/html");
+    file.close();
+  } else {
+    server.send(404, "text/plain", "File not found");
+  }
 }
 
 void handleNotFound() {
