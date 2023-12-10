@@ -12,6 +12,11 @@ const char* password = "aaaaaaaa";
 String receivedPacket = "";
 String incomingPacket = "";
 bool newData = false;
+bool WifiMode= false;
+
+//defines
+#define staMode true
+
 
 //instance(object)OfClasses...
 ESP8266WebServer server(80);
@@ -26,46 +31,22 @@ void handdleIncomingSerialData();
 void getData();
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 void logData(float sensor1Value, float sensor2Value);
+void beatOnce();
 float readSensor1();
 float readSensor2();
-
+bool TurnOnWiFi(bool mode);
+bool TurnOnSD();
+bool TurnOnWebSockets();
 
 //functionUse...
 void setup() {
   Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  
-  Serial.print("\nConnecting to WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nWiFi Connected");
-  Serial.print("\nConnected to: ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println("");
-
-  if (!SD.begin(D8)) { // CS pin is connected to D8
-    Serial.println("SD card initialization failed!");
-    return;
-  }
-  Serial.println("SD card initialized.");
-
-  server.on("/", HTTP_GET, handleRoot);
-  server.on("/export", HTTP_GET, handleExport);
-  server.onNotFound(handleNotFound);
-  server.begin();
-  Serial.println("HTTP server started");
-
-  webSocket.begin();
-  webSocket.onEvent(webSocketEvent);
-  Serial.println("webSocket started");
-
-  //If you are Using Serial for Sensor values Turn off Line bellow, Else other Line
+  TurnOnWiFi(!staMode);
+  TurnOnSD();
+  TurnOnServer();
+  TurnOnWebSockets();
+  timer1.attach(10, beatOnce);
   //timer1.attach(1, getData);
-
 }
 
 void loop() {
@@ -200,6 +181,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       DeserializationError error = deserializeJson(doc, payload);
       if (!error) {
         // Extract values
+        //{"S":100,"T":133626,"D":051223,"L":32.62031,"NS":"N","O":51.66251,"EW":"E","H":59} 
         int sensor1 = doc["sensor1"]; // Extract sensor1 value
         int sensor2 = doc["sensor2"]; // Extract sensor2 value
         // Do something with sensor values
@@ -221,4 +203,56 @@ float readSensor1() {
 
 float readSensor2() {
   return random(50, 70); // Dummy value for demonstration
+}
+
+bool TurnOnWiFi(bool mode){
+  if(mode==staMode){
+    while(1);
+  }
+  else{
+    WiFi.begin(ssid, password);
+    Serial.println("\n\nConnecting to WiFi");
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("\nWiFi Connected");
+    Serial.print("\nConnected to: ");
+    Serial.println(ssid);
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    Serial.println("");
+    return 1;
+  }
+}
+
+bool TurnOnSD(){
+  if (!SD.begin(D8)) { // CS pin is connected to D8
+    Serial.println("SD card initialization failed!");
+    return 0;
+  }
+  Serial.println("SD card initialized.");
+  return 1;
+}
+
+bool TurnOnServer(){
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/export", HTTP_GET, handleExport);
+  server.onNotFound(handleNotFound);
+  server.begin();
+  Serial.println("HTTP server started");
+  return 1;
+}
+
+bool TurnOnWebSockets(){
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+  Serial.println("webSocket started");
+  return 1;
+}
+
+void beatOnce(){
+    Serial.println("🤍");
+
+
 }
