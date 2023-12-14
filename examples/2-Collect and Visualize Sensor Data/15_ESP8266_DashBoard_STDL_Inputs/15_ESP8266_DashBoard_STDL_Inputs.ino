@@ -16,12 +16,13 @@ bool WifiMode= false;
 
 //defines
 #define staMode true
-
+#define ledPin D2
 
 //instance(object)OfClasses...
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 Ticker timer1;
+
 
 //functionDeclareation
 void handleRoot();
@@ -30,13 +31,14 @@ void handleNotFound();
 void handdleIncomingSerialData();
 void getData();
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
-void logData(float sensor1Value, float sensor2Value);
+void logData(int S, long T, String D, float L, String NS, float O, String EW, int H);
 void beatOnce();
-float readSensor1();
-float readSensor2();
 bool TurnOnWiFi(bool mode);
 bool TurnOnSD();
 bool TurnOnWebSockets();
+float readSensor1();
+float readSensor2();
+
 
 //functionUse...
 void setup() {
@@ -45,7 +47,8 @@ void setup() {
   TurnOnSD();
   TurnOnServer();
   TurnOnWebSockets();
-  timer1.attach(10, beatOnce);
+  ledTicker.attach(onTime, toggleLED); // Start with the LED on-time
+  timer1.attach(30, beatOnce);
   //timer1.attach(1, getData);
 }
 
@@ -71,15 +74,39 @@ void handdleIncomingSerialData(){
   if (newData) {
     webSocket.broadcastTXT(receivedPacket);
     Serial.println("Recieved Data: " + receivedPacket);
-    StaticJsonDocument<200> doc;
+    StaticJsonDocument<500> doc;
     DeserializationError error = deserializeJson(doc, receivedPacket);
     if (error) {
       Serial.print(F("deserializeJson() failed: "));
       Serial.println(error.f_str());
       return;
     }
-    logData(doc["sensor1"], doc["sensor2"]); // Log data to SD card
+    //{"S":100,"T":133626,"D":051223,"L":32.62031,"NS":"N","O":51.66251,"EW":"E","H":59} 
+    logData(doc["S"], doc["T"], doc["D"].as<String>(), doc["L"], doc["NS"], doc["O"], doc["EW"], doc["H"]); // Log data to SD card
+    // logData(doc["S"], doc["T"], doc["D"], doc["L"], doc["NS"], doc["O"], doc["EW"], doc["H"]);
+    // int S = doc["S"];
+    // long T = doc["T"];
+    // String D = doc["D"].as<String>();
+    // float L = doc["L"]; // Longitude
+    // String NS = doc["NS"].as<String>();
+    // float O = doc["O"]; // Could be latitude or another coordinate
+    // String EW = doc["EW"].as<String>();
+    // int H = doc["H"];
+    // OR:
+    // int S = doc["S"];
+    // long T = doc["T"];
+    // const char* D = doc["D"]; // Treat D as a string
+    // float L = doc["L"];
+    // String NS = doc["NS"].as<String>();
+    // float O = doc["O"];
+    // String EW = doc["EW"].as<String>();
+    // int H = doc["H"];
     //Serial.println(String(doc["sensor1"]) +" , "+ String(doc["sensor2"]));
+    
+    Serial.println(doc["D"].as<String>());
+    //Serial.println(doc["D"]);
+    Serial.println(String(doc["D"]));
+
     newData = false;
   }
 }
@@ -88,7 +115,7 @@ void getData() {
   float sensor1Value = readSensor1();
   float sensor2Value = readSensor2();
 
-  logData(sensor1Value, sensor2Value); // Log data to SD card
+  //logData(sensor1Value, sensor2Value); // Log data to SD card
 
   String jsonData = "{\"sensor1\":" + String(sensor1Value) + ", \"sensor2\":" + String(sensor2Value) + "}";
   webSocket.broadcastTXT(jsonData);
@@ -149,16 +176,46 @@ void handleExport() {
   dataFile.close();
 }
 
-void logData(float sensor1Value, float sensor2Value) {
-  File dataFile = SD.open("/Data/data.csv", "a");
+void logData(int S, long T, String D, float L, String NS, float O, String EW, int H) {
+  // logData(doc["S"], doc["T"], doc["D"], doc["L"], doc["NS"], doc["O"], doc["EW"], doc["H"]);
+  // int S = doc["S"];
+  // long T = doc["T"];
+  // String D = doc["D"].as<String>();
+  // float L = doc["L"]; // Longitude
+  // String NS = doc["NS"].as<String>();
+  // float O = doc["O"]; // Could be latitude or another coordinate
+  // String EW = doc["EW"].as<String>();
+  // int H = doc["H"];
+
+  //File dataFile = SD.open("/Data/data.csv", "a");
+  File dataFile = SD.open("/Data/data.csv", FILE_WRITE);
   if (!dataFile) {
     Serial.println("Failed to open data.csv file for writing, So we can not log data for you! :(");
-    return;
+    return ;
   }
-  
-  String dataString = String(sensor1Value) + "," + String(sensor2Value) + "\n";
-  dataFile.print(dataString);
+  // Format data as CSV
+  dataFile.print(S);
+  dataFile.print(',');
+  dataFile.print(T);
+  dataFile.print(',');
+  dataFile.print(D);
+  dataFile.print(',');
+  dataFile.print(L, 6); // Print longitude with 6 decimal places
+  dataFile.print(',');
+  dataFile.print(NS);
+  dataFile.print(',');
+  dataFile.print(O, 6); // Assuming 'O' is another coordinate, print with 6 decimal places
+  dataFile.print(',');
+  dataFile.print(EW);
+  dataFile.print(',');
+  dataFile.println(H);
+
   dataFile.close();
+  Serial.println("Data written to SD Card in CSV format.");
+  
+  // String dataString = String(sensor1Value) + "," + String(sensor2Value) + "\n";
+  // dataFile.print(dataString);
+  // dataFile.close();
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
@@ -177,7 +234,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       Serial.printf("[%u] Text: %s\n", num, payload);
       // You can process the text message here
       // For example, parse JSON data
-      StaticJsonDocument<200> doc;
+      StaticJsonDocument<512> doc;
       DeserializationError error = deserializeJson(doc, payload);
       if (!error) {
         // Extract values
@@ -232,6 +289,14 @@ bool TurnOnSD(){
     return 0;
   }
   Serial.println("SD card initialized.");
+  File dataFile = SD.open("/Data/data.csv", FILE_WRITE);
+
+  // Check if the file is new or empty and write the header
+  if (dataFile.size() == 0) {
+    dataFile.println("SN,Time,Date,latitude,N/S,Longitude,E/W,Heart Rate");
+  }
+  
+  dataFile.close();
   return 1;
 }
 
@@ -252,7 +317,8 @@ bool TurnOnWebSockets(){
 }
 
 void beatOnce(){
-    Serial.println("🤍");
-
-
+    Serial.print("🤍");
+    //digitalWrite(ledPin, !digitalRead(ledPin));
 }
+
+
